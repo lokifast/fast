@@ -1,0 +1,48 @@
+#Implement a transformer-based model for language translation.(Pract7)
+import tensorflow as tf
+from tensorflow.keras import layers
+import numpy as np
+
+# 1. Dataset (single word pairs)
+english = ["hello", "thanks", "yes", "no", "water", "bread", "morning", "night"]
+french  = ["bonjour", "merci", "oui", "non", "eau", "pain", "matin", "nuit"]
+
+# 2. Tokenization
+eng = layers.TextVectorization(output_sequence_length=1)
+fra = layers.TextVectorization(output_sequence_length=1)
+eng.adapt(english)
+fra.adapt(french)
+
+X = eng(english)
+Y = fra(french)
+
+eng_vocab = len(eng.get_vocabulary())
+fra_vocab = len(fra.get_vocabulary())
+
+# 3. Model (word -> word classifier)
+inp = layers.Input(shape=(1,))
+h = layers.Embedding(eng_vocab, 32)(inp)
+h = layers.Flatten()(h)
+h = layers.Dense(32, activation="relu")(h)
+output = layers.Dense(fra_vocab, activation="softmax")(h)
+
+model = tf.keras.Model(inp, output)
+model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
+              loss="sparse_categorical_crossentropy", metrics=["accuracy"])
+
+# 4. Train
+model.fit(X, Y, epochs=300, verbose=0)
+print("Model trained successfully!")
+
+# 5. Translation Function
+def translate(word):
+    encoded = eng([word])
+    prediction = model.predict(encoded, verbose=0)
+    word_id = np.argmax(prediction[0])
+    return fra.get_vocabulary()[word_id]
+
+# 6. Test
+for word in english:
+    print("English :", word)
+    print("French  :", translate(word))
+    print() 
