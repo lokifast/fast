@@ -1,0 +1,76 @@
+Save train.py and app.py in Model_Deployment folder which has to  be create anywhere inside that folder create the templates folder in which only index.html will get saved.
+
+A] train.py
+
+import pickle 
+from sklearn.linear_model import LogisticRegression
+
+x=[[1],[2],[3],[4],[5],[6]]
+y=[0,0,0,1,1,1]
+
+model=LogisticRegression()
+model.fit(x,y)
+
+
+with open("model.pkl", "wb") as file:
+    pickle.dump(model, file)
+    
+    
+print("Model Trained and Saved Successfully")
+
+B]app.py
+
+import pickle 
+from flask import Flask , request, render_template
+
+app = Flask(__name__)
+
+with open("model.pkl", "rb") as file:
+    model = pickle.load(file)
+    
+@app.route("/", methods=["GET", "POST"])
+def predict():
+    result=""
+    if request.method =="POST":
+        hours = float(request.form["hours"])
+        predition = model.predict([[hours]])
+        
+        if predition[0] ==1:
+            result="Student Likley to PASS"
+        else:
+            result = "Student Likely to FAIL"
+            
+    return render_template(
+        "index.html",
+        result=result)
+
+
+if __name__ == "__main__":
+    app.run(debug=False)
+
+
+C]index.html (notepad ) save in templates folder 
+
+<!DOCTYPE html>
+<html>
+<head>
+	<title> Student Prediction</title>
+</head>
+
+<body>
+	<h2>Student PASS/FAIL Prediction</h2>
+	<form method="POST">
+		<label> Enter you Hours:</label>
+		<input type="number"
+		       name="hours"
+		       step="0.1"
+		       required>
+		<button type="submit">
+			predict
+		</button>
+	</form>
+	<h3> {{ result }}</h3>
+
+</body>
+</html>
+		
