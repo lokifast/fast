@@ -1,15 +1,23 @@
-#Implement a transformer-based model for language translation.(Pract7)
+# Practical 7: Language Translation
+
 import tensorflow as tf
-from tensorflow.keras import layers
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Input, TextVectorization, Embedding, Flatten, Dense
 import numpy as np
 
-# 1. Dataset (single word pairs)
-english = ["hello", "thanks", "yes", "no", "water", "bread", "morning", "night"]
-french  = ["bonjour", "merci", "oui", "non", "eau", "pain", "matin", "nuit"]
+
+# 1. Dataset
+english = ["hello", "thanks", "yes", "no",
+           "water", "bread", "morning", "night"]
+
+french = ["bonjour", "merci", "oui", "non",
+          "eau", "pain", "matin", "nuit"]
+
 
 # 2. Tokenization
-eng = layers.TextVectorization(output_sequence_length=1)
-fra = layers.TextVectorization(output_sequence_length=1)
+eng = TextVectorization(output_sequence_length=1)
+fra = TextVectorization(output_sequence_length=1)
+
 eng.adapt(english)
 fra.adapt(french)
 
@@ -19,30 +27,48 @@ Y = fra(french)
 eng_vocab = len(eng.get_vocabulary())
 fra_vocab = len(fra.get_vocabulary())
 
-# 3. Model (word -> word classifier)
-inp = layers.Input(shape=(1,))
-h = layers.Embedding(eng_vocab, 32)(inp)
-h = layers.Flatten()(h)
-h = layers.Dense(32, activation="relu")(h)
-output = layers.Dense(fra_vocab, activation="softmax")(h)
 
-model = tf.keras.Model(inp, output)
-model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
-              loss="sparse_categorical_crossentropy", metrics=["accuracy"])
+# 3. Create the model
+model = Sequential([
+    Input(shape=(1,)),
+    Embedding(eng_vocab, 32),
+    Flatten(),
+    Dense(32, activation="relu"),
+    Dense(fra_vocab, activation="softmax")
+])
 
-# 4. Train
+
+# 4. Compile the model
+model.compile(
+    optimizer="adam",
+    loss="sparse_categorical_crossentropy",
+    metrics=["accuracy"]
+)
+
+
+# 5. Train the model
 model.fit(X, Y, epochs=300, verbose=0)
+
 print("Model trained successfully!")
 
-# 5. Translation Function
-def translate(word):
-    encoded = eng([word])
-    prediction = model.predict(encoded, verbose=0)
-    word_id = np.argmax(prediction[0])
-    return fra.get_vocabulary()[word_id]
 
-# 6. Test
+# 6. Translation function
+def translate(word):
+
+    word_number = eng([word])
+
+    prediction = model.predict(word_number, verbose=0)
+
+    predicted_number = np.argmax(prediction[0])
+
+    translated_word = fra.get_vocabulary()[predicted_number]
+
+    return translated_word
+
+
+# 7. Test the model
 for word in english:
-    print("English :", word)
-    print("French  :", translate(word))
-    print() 
+
+    print("English :", word)
+    print("French  :", translate(word))
+    print()
