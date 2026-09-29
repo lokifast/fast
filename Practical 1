@@ -1,0 +1,60 @@
+import tensorflow as tf
+from tensorflow.keras.datasets import fashion_mnist 
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Flatten, Dense 
+
+(x_train, y_train ),(x_test,y_test)=fashion_mnist.load_data()
+
+x_train = x_train/255.0
+x_test = x_test/255.0
+
+model = Sequential([
+    Flatten(input_shape=(28,28)),
+    Dense(128, activation="relu"),
+    Dense(64, activation="relu"),
+    Dense(10, activation="softmax")])
+
+model.compile(
+    optimizer="adam",
+    loss="sparse_categorical_crossentropy",
+    metrics=["accuracy"])
+
+history = model.fit(
+    x_train,
+    y_train,
+    epochs=10,
+    batch_size=32,
+    validation_split=0.2)
+
+loss , accuracy = model.evaluate(x_test, y_test)
+print("Test Loss:", loss)
+print("Test Accuracy:", accuracy)
+
+predictions = model.predict(x_test)
+predicted_classes = predictions.argmax(axis=1)
+
+print("Predicted Classes;")
+print(predicted_classes[:10])
+
+print("Actual Classes:")
+print(y_test[:10])
+
+
+
+class_name=[
+    "T-shirt/Top",
+    "Trouser",
+    "Pullover",
+    "Dress",
+    "Coat",
+    "Sandal",
+    "Shirt",
+    "Sneaker",
+    "Bag",
+    "Ankle Boot"]
+
+print("\nFirst 10 Predictions:")
+
+for i in range(10):
+    print("Actual:", class_name[y_test[i]],
+          "| Predicted:", class_name[predicted_classes[i]])
