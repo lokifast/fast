@@ -1,0 +1,126 @@
+# RUN THIS SETUP FIRST
+import time
+from collections import Counter
+import numpy as np
+import pandas as pd
+import spacy
+
+from spacy import displacy
+from spacy.language import Language
+from spacy.tokens import Doc
+
+nlp = spacy.load("en_core_web_sm")
+
+pd.set_option("display.width", 200)
+pd.set_option("display.max_columns", 30)
+pd.set_option("display.max_rows", 100)
+
+print("spaCy version :", spacy.__version__)
+print("Model loaded :", nlp.meta["name"])
+
+# ============================================================
+# Q3. TEXT NORMALIZATION
+# ============================================================
+
+from nltk.stem import PorterStemmer, SnowballStemmer, LancasterStemmer
+
+words = [
+    "running", "runs", "ran", "runner", "easily", "fairly",
+    "studies", "studying", "better", "wolves", "geese",
+    "happiness", "organization", "organizing", "generously"
+]
+
+text = ("The movie was not good at all. The actors were trying very hard but "
+        "the story was boring and the songs were too long. I would not "
+        "watch this movie again, although the music was quite nice.")
+
+# ---------- A. Stop Words ----------
+
+stop_words = nlp.Defaults.stop_words
+
+print("\n(A1) Number of default stop words :", len(stop_words))
+print(" First 20 (sorted) :", sorted(stop_words)[:20])
+
+doc = nlp(text)
+
+all_words = [t.text.lower() for t in doc if not t.is_punct]
+clean_words = [
+    t.text.lower() for t in doc
+    if not t.is_stop and not t.is_punct
+]
+
+reduction = 100 * (1 - len(clean_words) / len(all_words))
+
+print("\n(A2) Tokens before :", len(all_words))
+print(" Tokens after :", len(clean_words),
+      "(" + str(round(reduction, 1)) + "% reduction)")
+print(" Clean tokens :", clean_words)
+
+print("\n(A3) Top 5 words before :",
+      Counter(all_words).most_common(5))
+print(" Top 5 words after :",
+      Counter(clean_words).most_common(5))
+
+# Custom stop words
+nlp.Defaults.stop_words.discard("not")
+nlp.vocab["not"].is_stop = False
+
+nlp.Defaults.stop_words.add("movie")
+nlp.vocab["movie"].is_stop = True
+
+custom_doc = nlp(text)
+custom_words = [
+    t.text.lower() for t in custom_doc
+    if not t.is_stop and not t.is_punct
+]
+
+print("\n(A4) With custom stop words :", custom_words)
+print(" 'not' kept? ", "not" in custom_words,
+      "| 'movie' removed? ", "movie" not in custom_words)
+
+# Restore
+nlp.Defaults.stop_words.add("not")
+nlp.vocab["not"].is_stop = True
+nlp.Defaults.stop_words.discard("movie")
+nlp.vocab["movie"].is_stop = False
+
+# ---------- B. Stemming and Lemmatization ----------
+
+porter = PorterStemmer()
+snowball = SnowballStemmer("english")
+lancaster = LancasterStemmer()
+
+data = []
+
+for word in words:
+    data.append([
+        word,
+        porter.stem(word),
+        snowball.stem(word),
+        lancaster.stem(word),
+        nlp(word)[0].lemma_
+    ])
+
+q3 = pd.DataFrame(
+    data,
+    columns=["word", "porter", "snowball", "lancaster", "spacy_lemma"]
+)
+
+print("\n(B1) Stemmers vs spaCy lemmatizer")
+print(q3)
+
+different = q3[q3["porter"] != q3["spacy_lemma"]]["word"].tolist()
+print("\n(B2) Words where Porter stem differs from the lemma :", different)
+
+sentence = "The striped bats were hanging on their feet and ate the best fishes."
+
+print("\n(B3) Context-aware lemmatization")
+
+for t in nlp(sentence):
+    if not t.is_punct:
+        print(t.text, "POS=", t.pos_,
+              "lemma=", t.lemma_,
+              "porter=", porter.stem(t.text))
+
+print(" 'better'/'best' -> 'good' and 'were' -> 'be' only work because "
+      "the lemmatizer uses the POS tag. Stemmers just chop suffixes.")
