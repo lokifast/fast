@@ -1,0 +1,173 @@
+# RUN THIS SETUP FIRST
+import time
+from collections import Counter
+import numpy as np
+import pandas as pd
+import spacy
+
+from spacy import displacy
+from spacy.language import Language
+from spacy.tokens import Doc
+
+nlp = spacy.load("en_core_web_sm")
+
+pd.set_option("display.width", 200)
+pd.set_option("display.max_columns", 30)
+pd.set_option("display.max_rows", 100)
+
+print("spaCy version :", spacy.__version__)
+print("Model loaded :", nlp.meta["name"])
+
+
+# ============================================================
+# Q8. TF-IDF AND DOCUMENT SEARCH
+# ============================================================
+
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+corpus = [
+    "India won the cricket match against Australia by six wickets.",
+    "Virat Kohli scored a brilliant century in the cricket test match.",
+    "The new smartphone has a powerful processor and a great camera.",
+    "Apple launched a new laptop with a faster processor and longer battery.",
+    "Paneer butter masala and garlic naan are popular Indian dishes.",
+    "This restaurant serves delicious Indian food like biryani and dosa."
+]
+
+ids = ["D1", "D2", "D3", "D4", "D5", "D6"]
+
+
+# (a) Preprocessing
+def preprocess(text):
+    words = []
+
+    for t in nlp(text):
+        if t.is_alpha and not t.is_stop:
+            words.append(t.lemma_.lower())
+
+    return " ".join(words)
+
+
+clean = [preprocess(text) for text in corpus]
+
+print("\n(a) Preprocessed corpus")
+
+for i in range(6):
+    print(ids[i] + ":", clean[i])
+
+
+# (b) TF-IDF
+count = CountVectorizer()
+tf = count.fit_transform(clean).toarray()
+
+terms = count.get_feature_names_out()
+N = len(clean)
+
+df = (tf > 0).sum(axis=0)
+idf = np.log((1 + N) / (1 + df)) + 1
+
+manual_tfidf = tf * idf
+
+manual_tfidf = manual_tfidf / np.linalg.norm(
+    manual_tfidf, axis=1, keepdims=True
+)
+
+tfidf = TfidfVectorizer()
+sklearn_tfidf = tfidf.fit_transform(clean).toarray()
+
+print("\n(b) Manual TF-IDF == sklearn TF-IDF ? ",
+      np.allclose(manual_tfidf, sklearn_tfidf))
+
+idf_table = pd.DataFrame({
+    "term": terms,
+    "df": df,
+    "idf": np.round(idf, 3)
+})
+
+print(" Lowest IDF (common) terms")
+print(idf_table.sort_values("idf").head(5).to_string(index=False))
+
+tfidf_table = pd.DataFrame(
+    np.round(sklearn_tfidf, 3),
+    columns=tfidf.get_feature_names_out(),
+    index=ids
+)
+
+print("\n TF-IDF matrix")
+print(tfidf_table)
+
+
+# (c) Top 3 keywords
+print("\n(c) Top 3 keywords per document")
+
+for i in ids:
+    top = tfidf_table.loc[i].sort_values(
+        ascending=False
+    ).head(3)
+
+    print(i + ":", list(top.index))
+
+
+# (d) Document similarity
+similarity = pd.DataFrame(
+    np.round(cosine_similarity(sklearn_tfidf), 2),
+    index=ids,
+    columns=ids
+)
+
+print("\n(d) Cosine similarity between documents")
+print(similarity)
+
+values = similarity.to_numpy(copy=True)
+np.fill_diagonal(values, 0)
+
+r, c = np.unravel_index(values.argmax(), values.shape)
+
+print(" Most similar pair :", ids[r], "&", ids[c])
+
+
+# (e) Search engine
+def search(query, top=3):
+    q = tfidf.transform([preprocess(query)])
+    scores = cosine_similarity(q, sklearn_tfidf)[0]
+
+    order = np.argsort(scores)[::-1][:top]
+
+    for i in order:
+        print(ids[i],
+              "score=" + str(round(float(scores[i]), 3)),
+              corpus[i])
+
+
+for query in [
+    "cricket match score",
+    "laptop with good battery",
+    "tasty Indian dishes"
+]:
+    print("\n(e) Query:", query)
+    search(query)
+
+
+# (f) BoW vs TF-IDF
+bow_score = cosine_similarity(
+    count.transform([preprocess("Indian food")]),
+    tf
+)[0]
+
+tfidf_score = cosine_similarity(
+    tfidf.transform([preprocess("Indian food")]),
+    sklearn_tfidf
+)[0]
+
+print("\n(f) Query 'Indian food' BoW vs TF-IDF scores")
+
+print(pd.DataFrame({
+    "BoW": np.round(bow_score, 3),
+    "TF-IDF": np.round(tfidf_score, 3)
+}, index=ids))
+
+print(" TF-IDF lowers the weight of terms that appear in many documents "
+      "and raises rare, informative terms.")
+
+print("\n================ END OF PRACTICAL ================")
