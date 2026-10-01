@@ -1,0 +1,101 @@
+# RUN THIS SETUP FIRST
+import time
+from collections import Counter
+import numpy as np
+import pandas as pd
+import spacy
+
+from spacy import displacy
+from spacy.language import Language
+from spacy.tokens import Doc
+
+nlp = spacy.load("en_core_web_sm")
+
+pd.set_option("display.width", 200)
+pd.set_option("display.max_columns", 30)
+pd.set_option("display.max_rows", 100)
+
+print("spaCy version :", spacy.__version__)
+print("Model loaded :", nlp.meta["name"])
+
+# ============================================================
+# Q5. NAMED ENTITY RECOGNITION (NER)
+# ============================================================
+
+text = ("Sundar Pichai, the CEO of Google, visited Bengaluru on Monday to "
+        "meet Mukesh Ambani of Reliance Industries. Google announced an "
+        "investment of $10 billion in India over the next 5 years. "
+        "The meeting took place at the Taj West End hotel and was "
+        "attended by over 200 people from Infosys, Wipro and TCS.")
+
+doc = nlp(text)
+
+# (a) Entities
+data = []
+
+for ent in doc.ents:
+    data.append([
+        ent.text,
+        ent.label_,
+        spacy.explain(ent.label_),
+        ent.start_char,
+        ent.end_char
+    ])
+
+q5 = pd.DataFrame(
+    data,
+    columns=["entity", "label", "meaning", "start_char", "end_char"]
+)
+
+print("\n(a) Entities")
+print(q5)
+
+# (b) Entity count
+print("\n(b) Entities per label")
+print(q5["label"].value_counts())
+
+# (c) Group entities
+grouped = {}
+
+for ent in doc.ents:
+    if ent.label_ in ("PERSON", "ORG", "GPE"):
+        grouped.setdefault(ent.label_, set()).add(ent.text)
+
+print("\n(c) Grouped entities :", grouped)
+
+# (d) Custom entities
+nlp_ruler = spacy.load("en_core_web_sm")
+ruler = nlp_ruler.add_pipe("entity_ruler", before="ner")
+
+ruler.add_patterns([
+    {"label": "TECH", "pattern": "Python"},
+    {"label": "TECH", "pattern": "spaCy"},
+    {"label": "TECH",
+     "pattern": [{"LOWER": "spyder"}, {"LOWER": "ide"}]},
+    {"label": "COURSE",
+     "pattern": [
+         {"LOWER": "natural"},
+         {"LOWER": "language"},
+         {"LOWER": "processing"}
+     ]}
+])
+
+custom_text = (
+    "Students of MIT-WPU Pune use Python, spaCy and Spyder IDE in the "
+    "Natural Language Processing course taught by Prof. Kulkarni."
+)
+
+print("\n(d) Default model :",
+      [(e.text, e.label_) for e in nlp(custom_text).ents])
+
+print(" With ruler :",
+      [(e.text, e.label_) for e in nlp_ruler(custom_text).ents])
+
+# (e) Save NER visualisation
+html = displacy.render(doc, style="ent", page=True, jupyter=False)
+
+with open("q5_entities.html", "w", encoding="utf-8") as f:
+    f.write(html)
+
+print("\n(e) Saved 'q5_entities.html' in the working directory. "
+      "Open it in a browser.")
