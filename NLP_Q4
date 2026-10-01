@@ -1,0 +1,85 @@
+# RUN THIS SETUP FIRST
+import time
+from collections import Counter
+import numpy as np
+import pandas as pd
+import spacy
+
+from spacy import displacy
+from spacy.language import Language
+from spacy.tokens import Doc
+
+nlp = spacy.load("en_core_web_sm")
+
+pd.set_option("display.width", 200)
+pd.set_option("display.max_columns", 30)
+pd.set_option("display.max_rows", 100)
+
+print("spaCy version :", spacy.__version__)
+print("Model loaded :", nlp.meta["name"])
+
+# ============================================================
+# Q4. PART-OF-SPEECH (POS) TAGGING
+# ============================================================
+
+text = ("The young engineer quickly wrote clean Python code for the new "
+        "banking app. Her manager was very happy and gave her a small "
+        "bonus. The team will release the beautiful dashboard next week.")
+
+doc = nlp(text)
+
+# (a) POS table
+data = []
+
+for t in doc:
+    data.append([
+        t.text,
+        t.pos_,
+        t.tag_,
+        spacy.explain(t.tag_)
+    ])
+
+print("\n(a) POS tags")
+print(pd.DataFrame(
+    data,
+    columns=["token", "pos", "tag", "explanation"]
+))
+
+# (b) POS frequency
+counts = Counter(t.pos_ for t in doc if not t.is_punct)
+print("\n(b) POS frequency :", counts.most_common())
+
+# (c) Nouns, verbs, adjectives
+nouns = [t.text for t in doc if t.pos_ in ("NOUN", "PROPN")]
+verbs = [t.lemma_ for t in doc if t.pos_ == "VERB"]
+adjectives = [t.text for t in doc if t.pos_ == "ADJ"]
+
+print("\n(c) Nouns :", nouns)
+print(" Verbs :", verbs)
+print(" Adjectives :", adjectives)
+
+# (d) Adjective-noun pairs
+pairs = [
+    (t.text, t.head.text)
+    for t in doc
+    if t.pos_ == "ADJ" and t.dep_ == "amod"
+]
+
+print("\n(d) Adjective-noun pairs :", pairs)
+
+# (e) Noun chunks
+print("\n(e) Noun chunks :", [chunk.text for chunk in doc.noun_chunks])
+
+# (f) Same word, different POS
+print("\n(f) Ambiguity")
+
+sentences = [
+    "I will book a flight to Delhi.",
+    "I am reading a good book."
+]
+
+for sentence in sentences:
+    for t in nlp(sentence):
+        if t.text == "book":
+            print("'" + sentence + "' -> book =",
+                  t.pos_, "(", spacy.explain(t.pos_), ")")
