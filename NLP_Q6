@@ -1,0 +1,108 @@
+# RUN THIS SETUP FIRST
+import time
+from collections import Counter
+import numpy as np
+import pandas as pd
+import spacy
+
+from spacy import displacy
+from spacy.language import Language
+from spacy.tokens import Doc
+
+nlp = spacy.load("en_core_web_sm")
+
+pd.set_option("display.width", 200)
+pd.set_option("display.max_columns", 30)
+pd.set_option("display.max_rows", 100)
+
+print("spaCy version :", spacy.__version__)
+print("Model loaded :", nlp.meta["name"])
+
+# ============================================================
+# Q6. WORD EMBEDDINGS
+# Requires en_core_web_lg
+# ============================================================
+
+nlp_lg = spacy.load("en_core_web_lg")
+
+# (a) Vector
+king = nlp_lg.vocab["king"]
+
+print("\n(a) Vector dimension of 'king' :", king.vector.shape)
+print(" First 5 values :", np.round(king.vector[:5], 3))
+
+for word in ["king", "mumbai", "xyzqwe"]:
+    w = nlp_lg.vocab[word]
+    print(word, "has_vector=", w.has_vector,
+          "is_oov=", w.is_oov)
+
+# (b) Similarity matrix
+words = ["king", "queen", "man", "woman",
+         "apple", "mango", "car", "bus"]
+
+tokens = [nlp_lg(word)[0] for word in words]
+
+matrix = []
+
+for t1 in tokens:
+    row = []
+    for t2 in tokens:
+        row.append(round(t1.similarity(t2), 2))
+    matrix.append(row)
+
+print("\n(b) Similarity matrix")
+print(pd.DataFrame(matrix, index=words, columns=words))
+
+# Candidate words
+candidates = [
+    "doctor", "nurse", "hospital", "patient", "medicine", "surgeon",
+    "cricket", "football", "batsman", "stadium", "tennis", "match",
+    "python", "java", "code", "programming", "software", "snake",
+    "king", "queen", "prince", "princess", "man", "woman", "boy",
+    "girl", "apple", "mango", "banana", "car", "bus", "train"
+]
+
+
+def similar_words(vector, n=5, exclude=[]):
+    result = []
+
+    for word in candidates:
+        if word not in exclude:
+            v = nlp_lg.vocab[word].vector
+            score = np.dot(vector, v) / (
+                np.linalg.norm(vector) * np.linalg.norm(v)
+            )
+            result.append((word, round(float(score), 3)))
+
+    result.sort(key=lambda x: x[1], reverse=True)
+    return result[:n]
+
+
+# (c) Nearest neighbours
+for word in ["doctor", "cricket", "python"]:
+    print("\n(c) Most similar to '" + word + "' :",
+          similar_words(nlp_lg.vocab[word].vector,
+                        exclude=[word]))
+
+# (d) Analogy
+analogy = (
+    nlp_lg.vocab["king"].vector
+    - nlp_lg.vocab["man"].vector
+    + nlp_lg.vocab["woman"].vector
+)
+
+print("\n(d) king - man + woman ~",
+      similar_words(analogy, 3, ["king", "man", "woman"]))
+
+# (e) Sentence similarity
+s1 = nlp_lg("I love eating spicy Indian food.")
+s2 = nlp_lg("Delicious curry and biryani are my favourite meals.")
+s3 = nlp_lg("The stock market crashed badly today.")
+
+print("\n(e) s1 vs s2 :", round(s1.similarity(s2), 3))
+print(" s1 vs s3 :", round(s1.similarity(s3), 3))
+
+average = np.mean([t.vector for t in s1], axis=0)
+
+print(" Doc vector == average of token vectors ? ",
+      np.allclose(average, s1.vector))
