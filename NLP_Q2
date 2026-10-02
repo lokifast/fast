@@ -57,11 +57,11 @@ print(" Entities available after disabling ner? ",
       small_docs[0].has_annotation("ENT_IOB"))
 
 # (c) Custom component
-if not Doc.has_extension("word_count"):
-    Doc.set_extension("word_count", default=0)
+if not doc.has_extension("word_count"):
+    doc.set_extension("word_count", default=0)
 
-if not Doc.has_extension("reading_time_sec"):
-    Doc.set_extension("reading_time_sec", default=0.0)
+if not doc.has_extension("reading_time_sec"):
+    doc.set_extension("reading_time_sec", default=0.0)
 
 
 @Language.component("text_stats")
