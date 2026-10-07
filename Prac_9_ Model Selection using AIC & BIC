@@ -1,0 +1,37 @@
+# RA PRACTICAL 9: Model Selection using AIC & BIC
+# [ Medical Insurance Cost Dataset [From Kaggle] ]
+
+head(insurance)
+tail(insurance)
+str(insurance)
+class(insurance)
+
+model = lm(charges ~ age+ bmi+ children , data = insurance)
+coef(model)
+summary(model)
+new = data.frame(age=20, bmi=40, children=2)
+predict(model, newdata = new)
+
+model1 = lm(charges ~ age+ bmi, data = insurance)
+summary(model1)
+
+model2 = lm(charges ~ age+ children, data = insurance)
+summary(model2)
+
+model3 = lm(charges ~ age, data = insurance)
+summary(model3)
+
+AIC(model, model1, model2, model3)
+BIC(model, model1 , model2, model3)
+
+model_comparison = data.frame(
+  model = c("Full","reduced1","reduced2","simplest"),
+  AIC = c(AIC(model), AIC(model1),AIC(model2),AIC(model3)),
+  BIC = c(BIC(model), BIC(model1),BIC(model2), BIC(model3))
+)
+model_comparison
+
+
+# Lower AIC and BIC indicate a better model.
+# The model with the lowest AIC and BIC is preferred.
+# AIC and BIC are used to compare model fit and complexity.
