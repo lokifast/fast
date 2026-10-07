@@ -1,6 +1,6 @@
-RA PRACTICAL 7: Multicollinearity & Heteroscedasticity in MLR
+# RA PRACTICAL 7: Multicollinearity & Heteroscedasticity in MLR
 
-[ Medical Insurance Cost Dataset [From Kaggle] ]
+# [ Medical Insurance Cost Dataset [From Kaggle] ]
 
 head(insurance)
 tail(insurance)
