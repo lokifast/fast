@@ -1,0 +1,36 @@
+# RA PRACTICAL 3: Model Evaluation & Diagnostic Analysis of SLR
+
+[ Medical Insurance Cost Dataset [From Kaggle] ]
+
+head(insurance)
+tail(insurance)
+str(insurance)
+class(insurance)
+table(insurance$smoker)
+
+plot(insurance$age, insurance$bmi, main="Scatter Plot", xlab="Age", ylab="bmi", col="orange", pch=19)
+
+model = lm(bmi ~ age , data = insurance)
+coef(model)
+summary(model)
+abline(model, col="red", lwd=2)
+
+predict(model , newdata = data.frame(age=c(20,40,60)))
+
+fitted = predict(model)
+residual = residuals(model)
+
+plot(fitted, residual , main="residuals plot", xlab="fitted values", ylab="residuals")
+abline(h=0, col="red", lwd=2)
+
+std_residual = rstandard(model)
+which(abs(std_residual) > 2)
+sort(residual)
+  
+#Model Evaluation and Diagnostic Analysis:
+#Random Scatter = Good Relationship
+#Curved Scatter = Not Linear Relationship
+#Funnel Shape = Unequal Variance and Heteroscedasticity
+#Clustered Shape =  Group formulation and omitted variables
+#Regression assumes Homoscedasticity
+#Outlier = Very far from 0 then its Outlier 
