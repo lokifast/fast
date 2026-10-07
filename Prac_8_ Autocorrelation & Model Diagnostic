@@ -1,6 +1,6 @@
-RA PRACTICAL 8: Autocorrelation & Model Diagnostic
+# RA PRACTICAL 8: Autocorrelation & Model Diagnostic
 
-[ Medical Insurance Cost Dataset [From Kaggle] ]
+# [ Medical Insurance Cost Dataset [From Kaggle] ]
 
 head(insurance)
 tail(insurance)
