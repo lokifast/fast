@@ -1,0 +1,74 @@
+# RA PRACTICAL 14: (a) Estimation of Seasonal Components  (b) Ratio to Moving Average
+
+(a) Estimation of Seasonal Components
+data("AirPassengers")
+
+# Create month and passenger data
+df = data.frame(
+  Month = cycle(AirPassengers),
+  Passenger = as.numeric(AirPassengers)
+)
+
+# Calculate monthly and overall averages
+monthly_avg = aggregate(Passenger ~ Month, df, mean)
+overall_avg = mean(df$Passenger)
+
+# Calculate seasonal index
+monthly_avg$Seasonal_Index =
+  monthly_avg$Passenger / overall_avg * 100
+
+monthly_avg
+
+# Plot seasonal indices
+plot(monthly_avg$Month, monthly_avg$Seasonal_Index,
+     type="o", xaxt="n",
+     xlab="Month", ylab="Seasonal Index",
+     main="Seasonal Indices - Simple Average")
+
+axis(1, 1:12, month.abb)
+abline(h=100, lty=2)
+
+
+#The seasonal indices show that passenger numbers vary by month. 
+#An index above 100 indicates higher-than-average passengers, while an index below 100 indicates lower-than-average passengers.
+
+ (b) Ratio to Moving Average
+
+data("AirPassengers")
+
+library(zoo)
+
+# Calculate 12-month moving average
+ma12 = rollmean(AirPassengers, 12,
+                align="center", fill=NA)
+
+# Calculate ratio to moving average
+ratio = AirPassengers / ma12 * 100
+
+ratio_df = data.frame(
+  Month = cycle(AirPassengers),
+  Ratio = as.numeric(ratio)
+)
+
+# Remove missing values
+ratio_df = na.omit(ratio_df)
+
+# Calculate average ratio for each month
+seasonal = aggregate(Ratio ~ Month, ratio_df, mean)
+
+# Calculate adjusted seasonal index
+seasonal$Seasonal_Index =
+  seasonal$Ratio * 1200 / sum(seasonal$Ratio)
+
+seasonal
+
+# Plot seasonal indices
+plot(seasonal$Month, seasonal$Seasonal_Index,
+     type="o", pch=16,
+     xlab="Month", ylab="Seasonal Index",
+     main="Seasonal Indices - Ratio to Moving Average")
+
+abline(h=100, lty=2)
+
+# The seasonal indices show the seasonal variation after removing the trend effect using a 12-month moving average. 
+# An index above 100 indicates higher seasonal activity, while below 100 indicates lower seasonal activity.
