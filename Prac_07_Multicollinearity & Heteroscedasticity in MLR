@@ -61,6 +61,7 @@ bptest(model_log)
 # STEP 4: WEIGHTED LEAST SQUARES (WLS)
 
 # Calculate weights using the squared predicted values
+insurance$predicted = predict(model)
 insurance$weights = 1 / insurance$predicted^2
 
 # Create Weighted Least Squares model
