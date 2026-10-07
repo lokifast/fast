@@ -1,0 +1,33 @@
+RA PRACTICAL 8: Autocorrelation & Model Diagnostic
+
+[ Medical Insurance Cost Dataset [From Kaggle] ]
+
+head(insurance)
+tail(insurance)
+str(insurance)
+class(insurance)
+
+model = lm(charges ~ age+ bmi+ children , data = insurance)
+coef(model)
+summary(model)
+new = data.frame(age=20, bmi=40, children=2)
+predict(model, newdata = new)
+
+# RA PRACTICAL: Autocorrelation Test
+
+# Install and load lmtest package
+install.packages("lmtest")
+library(lmtest)
+
+# Hypothesis:
+# H0: No autocorrelation
+# H1: Autocorrelation is present
+
+# Durbin-Watson test
+dwtest(model)
+
+plot(residuals(model))
+
+# Interpretation:
+# p-value > 0.05 → Fail to reject H0 → No significant autocorrelation
+# p-value < 0.05 → Reject H0 → Significant autocorrelation
