@@ -1,0 +1,91 @@
+RA PRACTICAL 7: Multicollinearity & Heteroscedasticity in MLR
+
+[ Medical Insurance Cost Dataset [From Kaggle] ]
+
+head(insurance)
+tail(insurance)
+str(insurance)
+class(insurance)
+
+model = lm(charges ~ age+ bmi+ children , data = insurance)
+coef(model)
+summary(model)
+new = data.frame(age=20, bmi=40, children=2)
+predict(model, newdata = new)
+
+
+# STEP 1: CHECK MULTICOLLINEARITY
+
+# Install car package
+install.packages("car")
+library(car)
+
+# Calculate VIF for the MLR model
+# VIF is used to detect multicollinearity among predictors
+vif(model)
+
+
+# STEP 2: BREUSCH-PAGAN TEST FOR HETEROSCEDASTICITY
+
+# Install lmtest package
+install.packages("lmtest")
+library(lmtest)
+
+# Perform Breusch-Pagan test
+# H0: No heteroscedasticity
+# H1: Heteroscedasticity is present
+bptest(model)
+
+# If p-value < 0.05:
+# Reject H0 and conclude that there is significant evidence
+# of heteroscedasticity.
+
+# STEP 3: LOG TRANSFORMATION
+
+# Apply log transformation to the dependent variable
+# This may help reduce heteroscedasticity
+model_log = lm(log(charges) ~ age + bmi + children,
+               data = insurance)
+
+summary(model_log)
+
+# Test heteroscedasticity again after log transformation
+bptest(model_log)
+
+# If p-value is still < 0.05:
+# Heteroscedasticity is still present.
+# Therefore, log transformation has not adequately
+# removed heteroscedasticity.
+
+
+# STEP 4: WEIGHTED LEAST SQUARES (WLS)
+
+# Calculate weights using the squared predicted values
+insurance$weights = 1 / insurance$predicted^2
+
+# Create Weighted Least Squares model
+
+model_wls = lm(charges ~ age + bmi + children,
+               data = insurance,
+               weights = insurance$weights)
+
+summary(model_wls)
+
+# Test heteroscedasticity after applying WLS
+bptest(model_wls)
+
+# If p-value > 0.05:
+# Fail to reject H0.
+# There is no significant evidence of heteroscedasticity.
+
+# STEP 5: DIAGNOSTIC PLOTS FOR WLS MODEL
+
+# Display standard diagnostic plots
+plot(model_wls)
+
+# Plot fitted values against residuals
+# Used to visually check the residual pattern
+plot(fitted(model_wls), residuals(model_wls), xlab="Fitted Values", ylab="Residuals", main="Residuals vs Fitted Values")
+
+# Add horizontal line at residual = 0
+abline(h = 0, lty = 2, col = "purple")
