@@ -1,6 +1,6 @@
-RA PRACTICAL 6: Residual Analysis & Detection of Outliers in MLR
+# RA PRACTICAL 6: Residual Analysis & Detection of Outliers in MLR
 
-[ Medical Insurance Cost Dataset [From Kaggle] ]
+# [ Medical Insurance Cost Dataset [From Kaggle] ]
 
 head(insurance)
 tail(insurance)
@@ -34,7 +34,7 @@ insurance[outliers , c("age", "bmi","children","stdr")]
 plot(model)  #Residuals vs Fitted, Q-Q, Scale-Location, Residuals vs Leverage
 
 
-1. Residuals vs Fitted → Checks linearity and constant variance; random scatter around 0 means the model is suitable.
-2. Normal Q-Q → Checks normality of residuals; points close to the straight line mean residuals are approximately normal.
-3. Scale-Location → Checks constant variance; evenly scattered points indicate constant variance (no heteroscedasticity).
-4. Residuals vs Leverage → Detects influential observations; points with high leverage/Cook’s distance may strongly affect the model.
+# 1. Residuals vs Fitted → Checks linearity and constant variance; random scatter around 0 means the model is suitable.
+# 2. Normal Q-Q → Checks normality of residuals; points close to the straight line mean residuals are approximately normal.
+# 3. Scale-Location → Checks constant variance; evenly scattered points indicate constant variance (no heteroscedasticity).
+# 4. Residuals vs Leverage → Detects influential observations; points with high leverage/Cook’s distance may strongly affect the model.
