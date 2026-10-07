@@ -1,0 +1,41 @@
+# RA PRACTICAL 10: Binary Logistic Regression
+# Display and check the Titanic dataset
+head(Titanic)
+tail(Titanic)
+str(Titanic)
+class(Titanic)
+
+# Select required variables and remove missing values
+data = Titanic[, c("Age","Survived","Fare")]
+data = na.omit(data)
+
+head(data)
+
+# Build Binary Logistic Regression model
+model = glm(Survived ~ Age + Fare,
+            data = data,
+            family = binomial)
+
+coef(model)
+summary(model)
+
+# Convert coefficients into odds ratios
+exp(coef(model))
+
+# Predict survival probability and class
+data$predprob = predict(model, type="response")
+data$prdclass = ifelse(data$predprob >= 0.5, 1, 0)
+
+head(data)
+
+# Calculate pseudo R-squared
+install.packages("pscl")
+library(pscl)
+pR2(model)
+
+# Conclusion:
+# Logistic regression was successfully used to predict survival
+# based on Age and Fare.
+# Predicted probabilities were converted into survival classes
+# using a 0.5 cutoff.
+# McFadden's R-squared was used to evaluate model fit.
